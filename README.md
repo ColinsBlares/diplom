@@ -2,8 +2,7 @@
 
 [![PHP](https://img.shields.io/badge/PHP-8.x-blue.svg?style=flat-square)](https://www.php.net/)
 [![MySQL](https://img.shields.io/badge/MySQL-5.x+-green.svg?style=flat-square)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Maintenance](https://img.shields.io/badge/Maintained-yes-brightgreen.svg?style=flat-square)](https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME/graphs/commit-activity)
+
 
 ## Описание
 
