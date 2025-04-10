@@ -2,6 +2,9 @@
 session_start();
 require_once 'db.php';
 $pdo = require 'db.php';
+// Получение ID ТСЖ из сессии
+$tsj_id = $_SESSION['tsj_id'];
+$id_tszh = $tsj_id; // Assign $tsj_id to $id_tszh for the back button link
 
 // Проверка авторизации
 if (!isset($_SESSION['user_id'])) {
@@ -16,6 +19,7 @@ if (!in_array($_SESSION['role'], ['admin', 'owner'])) {
 
 // Получение ID ТСЖ из сессии
 $tsj_id = $_SESSION['tsj_id'];
+$id_tszh = $tsj_id; // Assign $tsj_id to $id_tszh for the back button link
 
 // Обработка изменения статуса заявки
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['request_id'])) {
@@ -30,8 +34,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['request_id'])) {
     try {
         // Обновляем статус заявки
         $stmt_update = $pdo->prepare("
-            UPDATE service_requests 
-            SET status = :status 
+            UPDATE service_requests
+            SET status = :status
             WHERE id = :id AND tsj_id = :tsj_id
         ");
         $stmt_update->execute([
@@ -50,10 +54,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['request_id'])) {
 
 // Получение списка заявок для текущего ТСЖ
 $stmt_requests = $pdo->prepare("
-    SELECT sr.*, u.username 
-    FROM service_requests sr 
-    JOIN users u ON sr.user_id = u.id 
-    WHERE sr.tsj_id = :tsj_id 
+    SELECT sr.*, u.username
+    FROM service_requests sr
+    JOIN users u ON sr.user_id = u.id
+    WHERE sr.tsj_id = :tsj_id
     ORDER BY sr.created_at DESC
 ");
 $stmt_requests->execute(['tsj_id' => $tsj_id]);
@@ -126,7 +130,7 @@ $requests = $stmt_requests->fetchAll();
         .btn {
             display: inline-block;
             padding: 10px 20px;
-            background-color: #4CAF50;
+            background-color: #007bff; /* Changed button color to blue for better distinction */
             color: white;
             border: none;
             border-radius: 5px;
@@ -136,13 +140,16 @@ $requests = $stmt_requests->fetchAll();
             transition: background-color 0.3s;
         }
         .btn:hover {
-            background-color: #45a049;
+            background-color: #0056b3;
         }
         .actions {
             margin-top: 20px;
+            display: flex;
+            gap: 10px; /* Added gap for better spacing between buttons */
+            align-items: center; /* Vertically align items */
         }
         .actions a {
-            margin-right: 10px;
+            margin-right: 0; /* Removed unnecessary right margin */
         }
     </style>
 </head>
@@ -150,12 +157,11 @@ $requests = $stmt_requests->fetchAll();
 <div class="container">
     <h1>Просмотр заявок на обслуживание</h1>
 
-    <!-- Кнопка для добавления новой заявки -->
     <div class="actions">
         <a href="add_request.php" class="btn">Добавить заявку</a>
+        <a href="dashboard.php?id_tszh=<?= $id_tszh ?>" class="btn">Назад</a>
     </div>
 
-    <!-- Список заявок -->
     <table>
         <thead>
             <tr>

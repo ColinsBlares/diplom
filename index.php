@@ -1,17 +1,35 @@
 <?php
 session_start();
 
-// Подключение к базе данных через db.php (если нужно)
-require_once 'db.php';
+// Подключение к конфигурационному файлу
+require_once 'config.php';
+
+// Подключение к базе данных
 $pdo = require 'db.php';
 
 // Проверка авторизации
 $is_logged_in = isset($_SESSION['user_id']);
 
-// Получение последних новостей из базы данных
-$stmt_news = $pdo->prepare("SELECT * FROM news ORDER BY created_at DESC LIMIT 5");
-$stmt_news->execute();
-$recent_news = $stmt_news->fetchAll();
+// Константа для количества новостей на главной странице
+const NEWS_LIMIT = 5;
+
+/**
+ * Получает последние новости из базы данных.
+ *
+ * @param PDO $pdo Объект PDO для подключения к базе данных.
+ * @param int $limit Количество новостей для получения.
+ * @return array Массив с последними новостями.
+ */
+function getRecentNews(PDO $pdo, int $limit): array
+{
+    $stmt = $pdo->prepare("SELECT * FROM news ORDER BY created_at DESC LIMIT :limit");
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+// Получение последних новостей
+$recent_news = getRecentNews($pdo, NEWS_LIMIT);
 ?>
 
 <!DOCTYPE html>
@@ -20,6 +38,7 @@ $recent_news = $stmt_news->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ТСЖ - Главная страница</title>
+    <meta name="description" content="Главная страница системы управления ТСЖ. Управляйте платежами, заявками и будьте в курсе последних новостей вашего дома.">
     <style>
         /* Общие стили */
         body {
@@ -84,6 +103,15 @@ $recent_news = $stmt_news->fetchAll();
             background-color: #45a049;
         }
 
+        .features-section h2,
+        .news-section h2,
+        .contact-section h2 {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
         .features {
             display: flex;
             justify-content: space-around;
@@ -106,15 +134,6 @@ $recent_news = $stmt_news->fetchAll();
             margin-bottom: 10px;
         }
 
-        footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            margin-top: 30px;
-        }
-
-        /* Стили для новостей */
         .news-section ul {
             list-style-type: none;
             padding: 0;
@@ -135,10 +154,49 @@ $recent_news = $stmt_news->fetchAll();
             margin-bottom: 5px;
         }
 
+        .news-section li p {
+            margin-bottom: 10px;
+        }
+
         .news-section li small {
             color: #666;
             display: block;
             margin-top: 5px;
+        }
+
+        .news-section li a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .news-section li a:hover {
+            text-decoration: underline;
+        }
+
+        .contact-section ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .contact-section li {
+            margin-bottom: 10px;
+        }
+
+        .contact-section li a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .contact-section li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 30px;
         }
 
         @media (max-width: 768px) {
@@ -151,24 +209,22 @@ $recent_news = $stmt_news->fetchAll();
             }
         }
     </style>
-    <!-- Yandex.Metrika counter -->
     <script type="text/javascript" >
-       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-       m[i].l=1*new Date();
-       for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-       k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-    
-       ym(100476206, "init", {
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+        ym(100476206, "init", {
             clickmap:true,
             trackLinks:true,
             accurateTrackBounce:true,
             webvisor:true
-       });
+        });
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/100476206" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!-- /Yandex.Metrika counter -->
-</head>
+    </head>
 <body>
 <header>
     <h1>Добро пожаловать в систему управления ТСЖ</h1>
@@ -186,52 +242,54 @@ $recent_news = $stmt_news->fetchAll();
         <?php endif; ?>
     </div>
 
-    <!-- Раздел: Возможности -->
-    <h2>Что вы можете делать?</h2>
-    <div class="features">
-        <div class="feature-box">
-            <strong>Просмотр платежей</strong>
-            <p>Отслеживайте все платежи и управляйте ими.</p>
+    <section class="features-section">
+        <h2>Что вы можете делать?</h2>
+        <div class="features">
+            <div class="feature-box">
+                <strong>Просмотр платежей</strong>
+                <p>Отслеживайте все платежи и управляйте ими.</p>
+            </div>
+            <div class="feature-box">
+                <strong>Подача заявок</strong>
+                <p>Оставляйте заявки на обслуживание и следите за их статусом.</p>
+            </div>
+            <div class="feature-box">
+                <strong>Получение новостей</strong>
+                <p>Будьте в курсе последних новостей от вашего ТСЖ.</p>
+            </div>
         </div>
-        <div class="feature-box">
-            <strong>Подача заявок</strong>
-            <p>Оставляйте заявки на обслуживание и следите за их статусом.</p>
-        </div>
-        <div class="feature-box">
-            <strong>Получение новостей</strong>
-            <p>Будьте в курсе последних новостей от вашего ТСЖ.</p>
-        </div>
-    </div>
+    </section>
 
-    <!-- Раздел: Новости -->
-    <h2>Последние новости</h2>
-    <div class="news-section">
+    <section class="news-section">
+        <h2>Последние новости</h2>
         <ul>
             <?php if (!empty($recent_news)): ?>
                 <?php foreach ($recent_news as $news): ?>
                     <li>
-                        <strong><?= htmlspecialchars($news['title']) ?></strong><br>
-                        <?= htmlspecialchars($news['content']) ?><br>
+                        <strong><?= htmlspecialchars($news['title']) ?></strong>
+                        <p><?= nl2br(htmlspecialchars($news['content'])) ?></p>
                         <small>Дата: <?= htmlspecialchars($news['created_at']) ?></small>
                     </li>
                 <?php endforeach; ?>
+                <li><a href="all_news.php">Все новости</a></li>
             <?php else: ?>
-                <li>Нет новых новостей.</li>
+                <li>На данный момент нет актуальных новостей. Следите за обновлениями!</li>
             <?php endif; ?>
         </ul>
-    </div>
+    </section>
 
-    <!-- Раздел: Контакты -->
-    <h2>Контакты</h2>
-    <p>Если у вас есть вопросы, свяжитесь с нами:</p>
-    <ul>
-        <li>Email: admin@colinsblare.ru</li>
-        <li>Телефон: +7 (999) 123-45-67</li>
-    </ul>
+    <section class="contact-section">
+        <h2>Контакты</h2>
+        <p>Если у вас есть вопросы, свяжитесь с нами:</p>
+        <ul>
+            <li>Email: <a href="mailto:<?= CONTACT_EMAIL ?>"><?= CONTACT_EMAIL ?></a></li>
+            <li>Телефон: <?= CONTACT_PHONE ?></li>
+        </ul>
+    </section>
 </div>
 
 <footer>
-    &copy; 2025 ТСЖ. Все права защищены.
+    &copy; <?= date('Y') ?> <?= SITE_NAME ?>. Все права защищены.
 </footer>
 </body>
 </html>

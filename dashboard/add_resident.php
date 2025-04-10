@@ -18,10 +18,9 @@ if (!in_array($_SESSION['role'], ['owner', 'manager'])) {
 }
 
 // Получение ID ТСЖ из параметров GET
-$id_tszh = intval($_GET['id_tszh'] ?? 0);
-
-if ($id_tszh <= 0) {
-    die("ID ТСЖ не указан.");
+$id_tszh = filter_input(INPUT_GET, 'id_tszh', FILTER_VALIDATE_INT);
+if ($id_tszh === false || $id_tszh <= 0) {
+    die("Некорректный ID ТСЖ.");
 }
 
 // Проверяем, что пользователь связан с указанным ТСЖ
@@ -35,9 +34,14 @@ $errors = [];
 
 // Обработка отправки формы
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $full_name = trim($_POST['full_name'] ?? '');
-    $apartment_number = trim($_POST['apartment_number'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $full_name = trim(filter_input(INPUT_POST, 'full_name', FILTER_SANITIZE_STRING) ?? '');
+    $apartment_number = trim(filter_input(INPUT_POST, 'apartment_number', FILTER_SANITIZE_STRING) ?? '');
+    $phone = trim(filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING) ?? '');
+    $passport_series = trim(filter_input(INPUT_POST, 'passport_series', FILTER_SANITIZE_STRING) ?? '');
+    $passport_number = trim(filter_input(INPUT_POST, 'passport_number', FILTER_SANITIZE_STRING) ?? '');
+    $passport_issued_by = trim(filter_input(INPUT_POST, 'passport_issued_by', FILTER_SANITIZE_STRING) ?? '');
+    $passport_issue_date = trim(filter_input(INPUT_POST, 'passport_issue_date', FILTER_SANITIZE_STRING) ?? '');
+    $registration_address = trim(filter_input(INPUT_POST, 'registration_address', FILTER_SANITIZE_STRING) ?? '');
 
     // Валидация данных
     if (empty($full_name)) {
@@ -50,6 +54,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($phone)) {
         $errors[] = "Телефон обязателен.";
+    } elseif (!preg_match('/^\+?[0-9]{7,15}$/', $phone)) {
+        $errors[] = "Некорректный формат телефона.";
+    }
+
+    if (!empty($passport_series) && !preg_match('/^[0-9]{4}$/', $passport_series)) {
+        $errors[] = "Серия паспорта должна состоять из 4 цифр.";
+    }
+
+    if (!empty($passport_number) && !preg_match('/^[0-9]{6}$/', $passport_number)) {
+        $errors[] = "Номер паспорта должен состоять из 6 цифр.";
+    }
+
+    if (!empty($passport_issue_date) && !strtotime($passport_issue_date)) {
+        $errors[] = "Некорректный формат даты выдачи паспорта.";
     }
 
     // Если нет ошибок, сохраняем жильца
@@ -57,14 +75,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         try {
             // Добавляем жильца в базу данных
             $stmt_add_resident = $pdo->prepare("
-                INSERT INTO residents (tsj_id, full_name, apartment_number, phone) 
-                VALUES (:tsj_id, :full_name, :apartment_number, :phone)
+                INSERT INTO residents (
+                    tsj_id,
+                    full_name,
+                    apartment_number,
+                    phone,
+                    passport_series,
+                    passport_number,
+                    passport_issued_by,
+                    passport_issue_date,
+                    registration_address
+                )
+                VALUES (
+                    :tsj_id,
+                    :full_name,
+                    :apartment_number,
+                    :phone,
+                    :passport_series,
+                    :passport_number,
+                    :passport_issued_by,
+                    :passport_issue_date,
+                    :registration_address
+                )
             ");
             $stmt_add_resident->execute([
                 'tsj_id' => $id_tszh,
                 'full_name' => $full_name,
                 'apartment_number' => $apartment_number,
-                'phone' => $phone
+                'phone' => $phone,
+                'passport_series' => $passport_series ?: null,
+                'passport_number' => $passport_number ?: null,
+                'passport_issued_by' => $passport_issued_by ?: null,
+                'passport_issue_date' => $passport_issue_date ?: null,
+                'registration_address' => $registration_address ?: null,
             ]);
 
             $success = "Жилец успешно добавлен!";
@@ -115,15 +158,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: block;
             margin-bottom: 5px;
             color: #555;
+            font-size: 14px;
         }
 
         input {
-            width: 100%;
+            width: calc(100% - 22px); /* Учет padding и border */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 14px;
+            box-sizing: border-box;
         }
 
         .btn {
@@ -143,8 +188,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #45a049;
         }
 
-        .error { color: red; }
-        .success { color: green; }
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            color: green;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -165,7 +217,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     <?php endif; ?>
 
-    <!-- Форма для добавления жильца -->
     <form method="POST" action="">
         <label for="full_name">ФИО жильца:</label>
         <input type="text" id="full_name" name="full_name" required>
@@ -176,10 +227,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label for="phone">Телефон:</label>
         <input type="text" id="phone" name="phone" required>
 
+        <label for="passport_series">Серия паспорта (опционально):</label>
+        <input type="text" id="passport_series" name="passport_series">
+
+        <label for="passport_number">Номер паспорта (опционально):</label>
+        <input type="text" id="passport_number" name="passport_number">
+
+        <label for="passport_issued_by">Кем выдан паспорт (опционально):</label>
+        <input type="text" id="passport_issued_by" name="passport_issued_by">
+
+        <label for="passport_issue_date">Дата выдачи паспорта (ГГГГ-ММ-ДД, опционально):</label>
+        <input type="text" id="passport_issue_date" name="passport_issue_date" placeholder="ГГГГ-ММ-ДД">
+
+        <label for="registration_address">Адрес регистрации (опционально):</label>
+        <input type="text" id="registration_address" name="registration_address">
+
         <button type="submit" class="btn">Добавить жильца</button>
     </form>
 
-    <!-- Ссылка для возврата -->
     <p><a href="dashboard.php?id_tszh=<?= $id_tszh ?>" class="btn">Назад</a></p>
 </div>
 </body>

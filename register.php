@@ -1,34 +1,82 @@
 <?php
 session_start();
 
-// Подключение к базе данных через db.php
 require_once 'db.php';
 $pdo = require 'db.php';
 
-// Переменные для сообщений
 $success = null;
 $errors = [];
 
-// Обработка отправки формы
+// Параметры безопасности (можно вынести в config-файл)
+const MIN_USERNAME_LENGTH = 3;
+const MAX_USERNAME_LENGTH = 50;
+const USERNAME_ALLOWED_CHARS = '/^[a-zA-Z0-9_-]+$/';
+const MIN_PASSWORD_LENGTH = 8;
+const VERIFICATION_TOKEN_LENGTH = 32; // Длина токена верификации
+
+// Функция для проверки сложности пароля (пример)
+function isPasswordSecure(string $password): bool
+{
+    return strlen($password) >= MIN_PASSWORD_LENGTH &&
+           preg_match('/[a-z]/', $password) &&
+           preg_match('/[A-Z]/', $password) &&
+           preg_match('/[0-9]/', $password);
+}
+
+// Функция для генерации случайного токена
+function generateVerificationToken(): string
+{
+    return bin2hex(random_bytes(VERIFICATION_TOKEN_LENGTH / 2));
+}
+
+// Функция для отправки письма с подтверждением (нужно настроить)
+function sendVerificationEmail(string $email, string $token): bool
+{
+    $subject = 'Подтверждение регистрации на сайте ТСЖ';
+    $verificationLink = 'https://' . $_SERVER['HTTP_HOST'] . '/verify_email.php?token=' . $token; 
+
+    $message = "Здравствуйте!\n\n";
+    $message .= "Благодарим вас за регистрацию на сайте ТСЖ.\n";
+    $message .= "Пожалуйста, перейдите по следующей ссылке, чтобы подтвердить свой адрес электронной почты:\n";
+    $message .= $verificationLink . "\n\n";
+    $message .= "Если вы не регистрировались на нашем сайте, проигнорируйте это письмо.\n\n";
+    $message .= "С уважением,\nАдминистрация ТСЖ";
+
+    $headers = 'From: noreply@colinsblare.ru' . "\r\n" . // Замените на свой адрес отправителя
+               'Reply-To: noreply@colinsblare.ru' . "\r\n" .
+               'X-Mailer: PHP/' . phpversion();
+
+    // Используйте функцию mail() или более надежную библиотеку для отправки почты
+    return mail($email, $subject, $message, $headers);
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = trim($_POST['username'] ?? '');
-    $email = trim($_POST['email'] ?? '');
+    $username = trim(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING) ?? '');
+    $email = trim(filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL) ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
 
     // Валидация данных
     if (empty($username)) {
         $errors[] = "Имя пользователя обязательно.";
+    } elseif (strlen($username) < MIN_USERNAME_LENGTH || strlen($username) > MAX_USERNAME_LENGTH) {
+        $errors[] = "Имя пользователя должен быть от " . MIN_USERNAME_LENGTH . " до " . MAX_USERNAME_LENGTH . " символов.";
+    } elseif (!preg_match(USERNAME_ALLOWED_CHARS, $username)) {
+        $errors[] = "Имя пользователя может содержать только буквы, цифры, символы _ и -.";
     }
 
     if (empty($email)) {
         $errors[] = "Email обязателен.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    } elseif (!$email) { // filter_var может вернуть false
         $errors[] = "Некорректный формат Email.";
     }
 
     if (empty($password)) {
         $errors[] = "Пароль обязателен.";
+    } elseif (strlen($password) < MIN_PASSWORD_LENGTH) {
+        $errors[] = "Пароль должен быть не менее " . MIN_PASSWORD_LENGTH . " символов.";
+    } elseif (!isPasswordSecure($password)) {
+        $errors[] = "Пароль должен содержать строчные и прописные буквы, а также цифры.";
     }
 
     if ($password !== $confirm_password) {
@@ -50,24 +98,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    // Если нет ошибок, создаем пользователя
+    // Если нет ошибок, создаем пользователя и отправляем письмо
     if (empty($errors)) {
         try {
-            // Хэширование пароля
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $verification_token = generateVerificationToken();
 
-            // Добавляем пользователя в базу данных
             $stmt_add_user = $pdo->prepare("
-                INSERT INTO users (username, email, password, role) 
-                VALUES (:username, :email, :password, 'user')
+                INSERT INTO users (username, email, password, role, verification_token)
+                VALUES (:username, :email, :password, 'user', :verification_token)
             ");
             $stmt_add_user->execute([
                 'username' => $username,
                 'email' => $email,
-                'password' => $hashed_password
+                'password' => $hashed_password,
+                'verification_token' => $verification_token,
             ]);
 
-            $success = "Вы успешно зарегистрировались! Теперь вы можете войти в систему.";
+            if (sendVerificationEmail($email, $verification_token)) {
+                $success = "Вы успешно зарегистрировались! Пожалуйста, проверьте свою электронную почту и перейдите по ссылке для подтверждения.";
+            } else {
+                $errors[] = "Ошибка при отправке письма с подтверждением. Пожалуйста, попробуйте позже.";
+                // В реальном приложении стоит рассмотреть логирование этой ошибки
+            }
+
         } catch (Exception $e) {
             $errors[] = "Ошибка регистрации: " . $e->getMessage();
         }
@@ -172,6 +226,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         a:hover {
             text-decoration: underline;
         }
+    .error {
+            color: red;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid red;
+            border-radius: 5px;
+            background-color: #ffe0e0;
+            text-align: left;
+        }
+        .error ul {
+            margin-top: 0;
+            padding-left: 20px;
+        }
+        .success {
+            color: green;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid green;
+            border-radius: 5px;
+            background-color: #e0ffe0;
+            text-align: center;
+        }
+        .info {
+            color: blue;
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -192,7 +273,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     <?php endif; ?>
 
-    <!-- Форма для регистрации -->
     <form method="POST" action="">
         <label for="username">Имя пользователя:</label>
         <input type="text" id="username" name="username" required>
@@ -209,8 +289,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <button type="submit" class="btn">Зарегистрироваться</button>
     </form>
 
-    <!-- Ссылка для входа -->
     <p>Уже есть аккаунт? <a href="login.php">Войти</a></p>
+
+    <?php if (!$success && empty($errors) && $_SERVER["REQUEST_METHOD"] == "POST"): ?>
+        <p class="info">На ваш адрес электронной почты отправлено письмо с инструкциями по подтверждению.</p>
+    <?php endif; ?>
 </div>
 </body>
 </html>

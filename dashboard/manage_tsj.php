@@ -23,8 +23,8 @@ if (!$tsj) {
     die("ТСЖ не найдено.");
 }
 
-// Получение списка жильцов
-$stmt_residents = $pdo->prepare("SELECT * FROM residents WHERE tsj_id = :tsj_id");
+// Получение списка жильцов с новыми полями
+$stmt_residents = $pdo->prepare("SELECT id, full_name, apartment_number, phone, passport_series, passport_number FROM residents WHERE tsj_id = :tsj_id");
 $stmt_residents->execute(['tsj_id' => $tsj_id]);
 $residents = $stmt_residents->fetchAll();
 
@@ -33,9 +33,9 @@ $total_residents = $pdo->prepare("SELECT COUNT(*) FROM residents WHERE tsj_id = 
 $total_residents->execute(['tsj_id' => $tsj_id]);
 $total_residents = $total_residents->fetchColumn();
 
-$total_payments = $pdo->prepare("SELECT SUM(amount) FROM payments WHERE tsj_id = :tsj_id");
+$total_payments = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE tsj_id = :tsj_id");
 $total_payments->execute(['tsj_id' => $tsj_id]);
-$total_payments = $total_payments->fetchColumn() ?: 0;
+$total_payments = $total_payments->fetchColumn();
 
 $total_requests = $pdo->prepare("SELECT COUNT(*) FROM service_requests WHERE tsj_id = :tsj_id");
 $total_requests->execute(['tsj_id' => $tsj_id]);
@@ -91,6 +91,7 @@ $total_requests = $total_requests->fetchColumn();
         th, td {
             padding: 10px;
             border: 1px solid #ddd;
+            text-align: left; /* Добавлено выравнивание текста слева для лучшей читаемости */
         }
 
         th {
@@ -109,18 +110,23 @@ $total_requests = $total_requests->fetchColumn();
             border-radius: 5px;
             cursor: pointer;
             margin: 5px;
+            text-decoration: none; /* Добавлено для стилизации ссылок как кнопок */
         }
 
         .btn-danger {
             background: #e74c3c;
+        }
+
+        .actions {
+            margin-top: 20px;
+            text-align: center; /* Центрирование кнопок действий */
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Управление ТСЖ: <?= htmlspecialchars($tsj['name']) ?></h1>
-    
-    <!-- Статистика -->
+
     <div class="stats">
         <div class="stat-box">
             <strong>Жильцов:</strong><br>
@@ -136,7 +142,6 @@ $total_requests = $total_requests->fetchColumn();
         </div>
     </div>
 
-    <!-- Список жильцов -->
     <h2>Жильцы</h2>
     <table>
         <thead>
@@ -144,6 +149,8 @@ $total_requests = $total_requests->fetchColumn();
                 <th>ФИО</th>
                 <th>Квартира</th>
                 <th>Телефон</th>
+                <th>Серия паспорта</th>
+                <th>Номер паспорта</th>
                 <th>Действия</th>
             </tr>
         </thead>
@@ -153,6 +160,8 @@ $total_requests = $total_requests->fetchColumn();
                     <td><?= htmlspecialchars($resident['full_name']) ?></td>
                     <td><?= htmlspecialchars($resident['apartment_number']) ?></td>
                     <td><?= htmlspecialchars($resident['phone']) ?></td>
+                    <td><?= htmlspecialchars($resident['passport_series'] ?: '-') ?></td>
+                    <td><?= htmlspecialchars($resident['passport_number'] ?: '-') ?></td>
                     <td>
                         <a href="edit_resident.php?id=<?= $resident['id'] ?>" class="btn">Редактировать</a>
                         <a href="delete_resident.php?id=<?= $resident['id'] ?>" class="btn btn-danger" onclick="return confirm('Удалить жильца?')">Удалить</a>
@@ -162,9 +171,7 @@ $total_requests = $total_requests->fetchColumn();
         </tbody>
     </table>
 
-    <!-- Действия -->
     <div class="actions">
-        <a href="add_resident.php?tsj_id=<?= $tsj_id ?>" class="btn">Добавить жильца</a>
         <a href="view_payments.php?tsj_id=<?= $tsj_id ?>" class="btn">Платежи</a>
         <a href="view_requests.php?tsj_id=<?= $tsj_id ?>" class="btn">Заявки</a>
         <a href="dashboard.php?id_tszh=<?= $tsj_id ?>" class="btn">Назад</a>

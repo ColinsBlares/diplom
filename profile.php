@@ -20,6 +20,10 @@ if (!$user) {
     header("Location: login.php");
     exit;
 }
+
+// Определите желаемый путь к админ-панели
+$admin_panel_path = 'admin/admin_dashboard.php'; // Пример: если папка admin находится в той же директории
+
 ?>
 
 <!DOCTYPE html>
@@ -100,19 +104,21 @@ if (!$user) {
             margin-top: 20px;
         }
 
-        .actions a {
-            margin: 5px;
+        .actions p {
+            margin: 5px 0; /* Улучшено вертикальное расстояние между кнопками */
+        }
+
+        .actions a.btn {
+            display: block; /* Кнопки на всю ширину на мобильных */
+            width: 100%;
+            box-sizing: border-box; /* Чтобы padding не увеличивал ширину */
+            margin-bottom: 10px; /* Добавлено расстояние между кнопками */
         }
 
         /* Медиа-запросы для мобильных устройств */
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
-            }
-
-            .btn {
-                width: 100%;
-                margin-bottom: 10px;
             }
         }
     </style>
@@ -122,7 +128,6 @@ if (!$user) {
     <h2>Профиль</h2>
     <p>Добро пожаловать, <?= htmlspecialchars($user['username']) ?>!</p>
 
-    <!-- Информация о пользователе -->
     <div class="user-info">
         <p><strong>Роль:</strong> <?= htmlspecialchars($_SESSION['role']) ?></p>
         <?php if ($_SESSION['role'] === 'owner' || $_SESSION['role'] === 'manager'): ?>
@@ -130,17 +135,13 @@ if (!$user) {
         <?php endif; ?>
     </div>
 
-    <!-- Раздел с действиями -->
     <div class="actions">
         <?php if ($_SESSION['role'] === 'admin'): ?>
-            <!-- Кнопка для администратора -->
-            <p><a href="admin_dashboard.php" class="btn">Админ-панель</a></p>
+            <p><a href="<?= htmlspecialchars($admin_panel_path) ?>" class="btn">Админ-панель</a></p>
         <?php elseif ($_SESSION['role'] === 'owner' || $_SESSION['role'] === 'manager'): ?>
-            <!-- Кнопка для владельца или менеджера -->
-            <p><a href="dashboard.php?id_tszh=<?= $_SESSION['tsj_id'] ?>" class="btn">Панель управления ТСЖ</a></p>
+            <p><a href="dashboard/dashboard.php?id_tszh=<?= $_SESSION['tsj_id'] ?>" class="btn">Панель управления ТСЖ</a></p>
         <?php endif; ?>
 
-        <!-- Общая кнопка выхода -->
         <p><a href="logout.php" class="btn">Выйти</a></p>
     </div>
 </div>

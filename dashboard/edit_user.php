@@ -17,14 +17,14 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 // Получение ID пользователя из параметров GET
-$user_id = intval($_GET['id'] ?? 0);
+$user_id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 
-if ($user_id <= 0) {
-    die("ID пользователя не указан.");
+if (!$user_id) {
+    die("ID пользователя не указан или некорректен.");
 }
 
 // Получение данных пользователя
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+$stmt = $pdo->prepare("SELECT id, username, email, role, is_verified FROM users WHERE id = :id");
 $stmt->execute(['id' => $user_id]);
 $user = $stmt->fetch();
 
@@ -37,9 +37,11 @@ $errors = [];
 $success = null;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = trim($_POST['username'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $role = trim($_POST['role'] ?? '');
+    // Фильтрация и очистка входных данных
+    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+    $role = filter_input(INPUT_POST, 'role', FILTER_SANITIZE_STRING);
+    $is_verified = isset($_POST['is_verified']);
 
     // Валидация данных
     if (empty($username)) {
@@ -75,20 +77,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($errors)) {
         try {
             $stmt_update_user = $pdo->prepare("
-                UPDATE users 
-                SET username = :username, email = :email, role = :role 
+                UPDATE users
+                SET username = :username, email = :email, role = :role, is_verified = :is_verified
                 WHERE id = :id
             ");
             $stmt_update_user->execute([
                 'username' => $username,
                 'email' => $email,
                 'role' => $role,
+                'is_verified' => $is_verified ? 1 : 0,
                 'id' => $user_id
             ]);
 
             $success = "Данные пользователя успешно обновлены!";
+            // Обновляем данные пользователя в сессии, если редактируется текущий пользователь
+            if (isset($_SESSION['user_id']) && $_SESSION['user_id'] === $user_id) {
+                $_SESSION['role'] = $role;
+            }
         } catch (Exception $e) {
             $errors[] = "Ошибка обновления данных: " . $e->getMessage();
+            // Логирование ошибки (в реальном приложении)
+            error_log("Ошибка обновления пользователя ID " . $user_id . ": " . $e->getMessage());
         }
     }
 }
@@ -109,12 +118,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh; /* Изменено на min-height для небольшого контента */
         }
 
         .container {
             max-width: 400px;
-            padding: 20px;
+            padding: 30px; /* Увеличено padding */
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -123,34 +132,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         h2 {
             color: #2c3e50;
-            margin-bottom: 20px;
+            margin-bottom: 25px; /* Увеличено margin-bottom */
         }
 
         /* Стиль формы */
         label {
             display: block;
-            margin-top: 15px;
+            margin-top: 18px; /* Увеличено margin-top */
             color: #555;
             font-size: 14px;
+            text-align: left; /* Выравнивание текста слева */
         }
 
         input[type="text"],
         input[type="email"],
         select {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 15px;
+            padding: 12px; /* Увеличено padding */
+            margin-top: 6px; /* Увеличено margin-top */
+            margin-bottom: 20px; /* Увеличено margin-bottom */
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
+            box-sizing: border-box; /* Добавлено для правильного расчета ширины */
         }
 
         /* Стиль кнопки */
         .btn {
             display: inline-block;
             width: 100%;
-            padding: 10px;
+            padding: 12px; /* Увеличено padding */
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -158,6 +169,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
+            margin-top: 15px; /* Добавлено margin-top */
         }
 
         .btn:hover {
@@ -167,8 +179,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         /* Стиль ошибок */
         .error {
             color: red;
-            margin-bottom: 15px;
+            margin-bottom: 20px; /* Увеличено margin-bottom */
             font-size: 14px;
+            text-align: left; /* Выравнивание текста слева */
+        }
+
+        .error ul {
+            padding-left: 20px;
+        }
+
+        /* Стиль сообщения об успехе */
+        .success {
+            color: green;
+            margin-bottom: 20px; /* Увеличено margin-bottom */
+            font-size: 14px;
+            text-align: center;
         }
 
         /* Стиль ссылок */
@@ -201,7 +226,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     <?php endif; ?>
 
-    <!-- Форма для редактирования пользователя -->
     <form method="POST" action="">
         <label for="username">Имя пользователя:</label>
         <input type="text" id="username" name="username" value="<?= htmlspecialchars($user['username']) ?>" required>
@@ -217,11 +241,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Администратор</option>
         </select>
 
+        <label for="is_verified">Подтвержденный Email:</label>
+        <input type="checkbox" id="is_verified" name="is_verified" <?= $user['is_verified'] ? 'checked' : '' ?>>
+
         <button type="submit" class="btn">Сохранить изменения</button>
     </form>
 
-    <!-- Ссылка для возврата -->
-    <p><a href="admin_dashboard.php">Назад в панель управления</a></p>
+    <p style="margin-top: 20px;"><a href="admin_dashboard.php">Назад в панель управления</a></p>
 </div>
 </body>
 </html>
