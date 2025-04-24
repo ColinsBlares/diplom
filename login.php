@@ -3,6 +3,13 @@ session_start();
 require_once 'db.php';
 $pdo = require 'db.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'phpmailer/src/PHPMailer.php';
+require 'phpmailer/src/SMTP.php';
+require 'phpmailer/src/Exception.php';
+
 // Константы для ролей пользователей
 const ROLE_ADMIN = 'admin';
 const ROLE_OWNER = 'owner';
@@ -59,22 +66,37 @@ function generateAuthCode(int $length = AUTH_CODE_LENGTH): string
     return $code;
 }
 
-// Функция для отправки кода подтверждения на почту
+// Функция для отправки кода подтверждения на почту через PHPMailer
 function sendAuthCodeEmail(string $email, string $code): bool
 {
-    $subject = 'Код подтверждения для входа в ТСЖ';
-    $message = "Здравствуйте!\n\n";
-    $message .= "Ваш код подтверждения для входа в систему ТСЖ:\n\n";
-    $message .= "{$code}\n\n";
-    $message .= "Этот код действителен в течение " . (AUTH_CODE_EXPIRY_SECONDS / 60) . " минут.\n\n";
-    $message .= "Если вы не запрашивали этот код, проигнорируйте это письмо.\n\n";
-    $message .= "С уважением,\nАдминистрация ТСЖ";
+    $mail = new PHPMailer(true);
+    $mail->CharSet = 'UTF-8';
 
-    $headers = 'From: noreply@colinsblare.ru' . "\r\n" .
-                'Reply-To: noreply@colinsblare.ru' . "\r\n" .
-                'X-Mailer: PHP/' . phpversion();
+    try {
+        // Настройки SMTP
+        $mail->isSMTP();
+        $mail->Host = 'smtp.yandex.ru';  // Замените на ваш SMTP сервер
+        $mail->SMTPAuth = true;
+        $mail->Username = 'kirilljuk.zhuk@yandex.ru';  // Ваш email
+        $mail->Password = 'tyzkcgcxuezkpodc';  // Ваш пароль приложения
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = 465;
 
-    return mail($email, $subject, $message, $headers);
+        // От кого и кому
+        $mail->setFrom('kirilljuk.zhuk@yandex.ru', 'ТСЖ');
+        $mail->addAddress($email);
+
+        // Контент письма
+        $mail->isHTML(true);
+        $mail->Subject = 'Код подтверждения для входа в ТСЖ';
+        $mail->Body = "Здравствуйте!<br><br>Ваш код подтверждения для входа в систему ТСЖ: <strong>{$code}</strong><br><br>Этот код действителен в течение " . (AUTH_CODE_EXPIRY_SECONDS / 60) . " минут.<br><br>Если вы не запрашивали этот код, проигнорируйте это письмо.<br><br>С уважением,<br>Администрация ТСЖ";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Ошибка при отправке письма: {$mail->ErrorInfo}");
+        return false;
+    }
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -213,6 +235,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             color: red;
             margin-bottom: 15px;
             font-size: 14px;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid red;
+            border-radius: 5px;
+            background-color: #ffe0e0;
         }
 
         /* Стиль ссылок */
@@ -234,6 +261,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <p class="error"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>
     <form method="POST">
+        <p class="error"><b>Внимание</b>: На данный момент наблюдаются проблемы с доставкой писем подтверждения на почтовые сервисы, отличные от <i>@yandex.ru</i>. Рекомендуем использовать адрес электронной почты <i>@yandex.ru</i> для гарантированного получения письма.</p>
         <label for="username">Имя пользователя:</label>
         <input type="text" id="username" name="username" required><br><br>
         <label for="password">Пароль:</label>

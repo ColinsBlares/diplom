@@ -14,6 +14,13 @@ const USERNAME_ALLOWED_CHARS = '/^[a-zA-Z0-9_-]+$/';
 const MIN_PASSWORD_LENGTH = 8;
 const VERIFICATION_TOKEN_LENGTH = 32; // Длина токена верификации
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'phpmailer/src/PHPMailer.php';
+require 'phpmailer/src/SMTP.php';
+require 'phpmailer/src/Exception.php';
+
 // Функция для проверки сложности пароля (пример)
 function isPasswordSecure(string $password): bool
 {
@@ -32,22 +39,46 @@ function generateVerificationToken(): string
 // Функция для отправки письма с подтверждением (нужно настроить)
 function sendVerificationEmail(string $email, string $token): bool
 {
-    $subject = 'Подтверждение регистрации на сайте ТСЖ';
-    $verificationLink = 'https://' . $_SERVER['HTTP_HOST'] . '/verify_email.php?token=' . $token; 
+    $mail = new PHPMailer(true);
+    $mail->CharSet = 'UTF-8';
 
-    $message = "Здравствуйте!\n\n";
-    $message .= "Благодарим вас за регистрацию на сайте ТСЖ.\n";
-    $message .= "Пожалуйста, перейдите по следующей ссылке, чтобы подтвердить свой адрес электронной почты:\n";
-    $message .= $verificationLink . "\n\n";
-    $message .= "Если вы не регистрировались на нашем сайте, проигнорируйте это письмо.\n\n";
-    $message .= "С уважением,\nАдминистрация ТСЖ";
+    try {
+        // SMTP конфигурация
+        $mail->isSMTP();
+        $mail->Host = 'smtp.yandex.ru'; // или другой SMTP-сервер
+        $mail->SMTPAuth = true;
+        $mail->Username = 'kirilljuk.zhuk@yandex.ru'; // логин
+        $mail->Password = 'tyzkcgcxuezkpodc';        // пароль приложения
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = 465;
 
-    $headers = 'From: noreply@colinsblare.ru' . "\r\n" . // Замените на свой адрес отправителя
-               'Reply-To: noreply@colinsblare.ru' . "\r\n" .
-               'X-Mailer: PHP/' . phpversion();
+        // От кого и кому
+        $mail->setFrom('kirilljuk.zhuk@yandex.ru', 'ТСЖ');
+        $mail->addAddress($email);
 
-    // Используйте функцию mail() или более надежную библиотеку для отправки почты
-    return mail($email, $subject, $message, $headers);
+        // Контент
+        $mail->isHTML(true);
+        $mail->Subject = 'Подтверждение регистрации на сайте ТСЖ';
+
+        $verificationLink = 'https://' . $_SERVER['HTTP_HOST'] . '/verify_email.php?token=' . $token;
+
+        $mail->Body = "
+            <p>Здравствуйте!</p>
+            <p>Благодарим вас за регистрацию на сайте ТСЖ.</p>
+            <p>Пожалуйста, перейдите по ссылке ниже, чтобы подтвердить ваш Email:</p>
+            <p><a href='{$verificationLink}'>{$verificationLink}</a></p>
+            <p>Если вы не регистрировались, просто проигнорируйте это письмо.</p>
+            <p><b>Внимание:</b> На данный момент письма лучше доходят на адреса @yandex.ru.</p>
+            <br><p>С уважением,<br>Администрация ТСЖ</p>
+        ";
+
+        $mail->AltBody = "Перейдите по ссылке для подтверждения: {$verificationLink}";
+
+        return $mail->send();
+    } catch (Exception $e) {
+        error_log("Ошибка при отправке письма: {$mail->ErrorInfo}");
+        return false;
+    }
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -55,6 +86,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim(filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL) ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
+    $full_name = trim(filter_input(INPUT_POST, 'full_name', FILTER_SANITIZE_STRING) ?? '');
+    $phone = trim(filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING) ?? '');
+    $date_of_birth = $_POST['date_of_birth'] ?? '';
+    $gender = $_POST['gender'] ?? '';
+    $agreement = $_POST['agreement'] ?? '';
 
     // Валидация данных
     if (empty($username)) {
@@ -83,6 +119,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Пароли не совпадают.";
     }
 
+    if (empty($full_name)) {
+        $errors[] = "Полное имя обязательно.";
+    }
+
+    if (empty($phone)) {
+        $errors[] = "Номер телефона обязателен.";
+    }
+
+    if (empty($date_of_birth)) {
+        $errors[] = "Дата рождения обязательна.";
+    }
+
+    if (empty($gender)) {
+        $errors[] = "Пол обязателен.";
+    }
+
+    if ($agreement != '1') {
+        $errors[] = "Необходимо согласие с политикой конфиденциальности.";
+    }
+
     // Проверка уникальности имени пользователя и email
     if (empty($errors)) {
         $stmt_check_username = $pdo->prepare("SELECT id FROM users WHERE username = :username");
@@ -105,21 +161,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $verification_token = generateVerificationToken();
 
             $stmt_add_user = $pdo->prepare("
-                INSERT INTO users (username, email, password, role, verification_token)
-                VALUES (:username, :email, :password, 'user', :verification_token)
+                INSERT INTO users (username, email, password, full_name, phone, date_of_birth, gender, role, verification_token)
+                VALUES (:username, :email, :password, :full_name, :phone, :date_of_birth, :gender, 'user', :verification_token)
             ");
             $stmt_add_user->execute([
                 'username' => $username,
                 'email' => $email,
                 'password' => $hashed_password,
+                'full_name' => $full_name,
+                'phone' => $phone,
+                'date_of_birth' => $date_of_birth,
+                'gender' => $gender,
                 'verification_token' => $verification_token,
             ]);
 
             if (sendVerificationEmail($email, $verification_token)) {
-                $success = "Вы успешно зарегистрировались! Пожалуйста, проверьте свою электронную почту и перейдите по ссылке для подтверждения.";
+                $success = "Вы успешно зарегистрировались! Пожалуйста, проверьте свою электронную почту (в том числе папку \"Спам\") и перейдите по ссылке для подтверждения.";
             } else {
                 $errors[] = "Ошибка при отправке письма с подтверждением. Пожалуйста, попробуйте позже.";
-                // В реальном приложении стоит рассмотреть логирование этой ошибки
             }
 
         } catch (Exception $e) {
@@ -136,7 +195,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация | ТСЖ</title>
     <style>
-        /* Общие стили */
         body {
             font-family: Arial, sans-serif;
             background-color: #f2f2f2;
@@ -144,7 +202,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
@@ -162,16 +221,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 20px;
         }
 
-        /* Стиль формы */
         label {
             display: block;
             margin-top: 15px;
             color: #555;
             font-size: 14px;
+            text-align: left;
         }
 
-        input[type="text"],
-        input[type="password"] {
+        input[type="text"], input[type="password"], input[type="email"], input[type="date"], input[type="phone"] {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -179,19 +237,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-        }
-        
-        input[type="email"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
+            box-sizing: border-box;
         }
 
-        /* Стиль кнопки */
         .btn {
             display: inline-block;
             width: 100%;
@@ -209,14 +257,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #45a049;
         }
 
-        /* Стиль ошибок */
         .error {
             color: red;
             margin-bottom: 15px;
             font-size: 14px;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid red;
+            border-radius: 5px;
+            background-color: #ffe0e0;
         }
 
-        /* Стиль ссылок */
+        .error ul {
+            margin-top: 0;
+            padding-left: 20px;
+        }
+
         a {
             color: #4CAF50;
             text-decoration: none;
@@ -226,32 +282,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         a:hover {
             text-decoration: underline;
         }
-    .error {
-            color: red;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid red;
-            border-radius: 5px;
-            background-color: #ffe0e0;
-            text-align: left;
-        }
-        .error ul {
-            margin-top: 0;
-            padding-left: 20px;
-        }
-        .success {
-            color: green;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid green;
-            border-radius: 5px;
-            background-color: #e0ffe0;
-            text-align: center;
-        }
+
         .info {
             color: blue;
             margin-top: 20px;
             text-align: center;
+            font-size: 14px;
+        }
+
+        .warning {
+            color: orange;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid orange;
+            border-radius: 5px;
+            background-color: #fff3cd;
         }
     </style>
 </head>
@@ -286,13 +333,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label for="confirm_password">Подтвердите пароль:</label>
         <input type="password" id="confirm_password" name="confirm_password" required>
 
+        <label for="full_name">Полное имя:</label>
+        <input type="text" id="full_name" name="full_name" required>
+
+        <label for="phone">Номер телефона:</label>
+        <input type="text" id="phone" name="phone" placeholder="+79991234567" required>
+
+        <label for="date_of_birth">Дата рождения:</label>
+        <input type="date" id="date_of_birth" name="date_of_birth" required>
+
+        <label>Пол:</label>
+        <div style="text-align: left; margin-bottom: 10px;">
+            <label><input type="radio" name="gender" value="male" required> Мужской</label><br>
+            <label><input type="radio" name="gender" value="female"> Женский</label><br>
+            <label><input type="radio" name="gender" value="other"> Другое</label>
+        </div>
+
+        <label>
+            <input type="checkbox" name="agreement" value="1" required>
+            Я соглашаюсь с <a href="/privacy-policy.html" target="_blank">политикой конфиденциальности</a>
+        </label>
+
         <button type="submit" class="btn">Зарегистрироваться</button>
     </form>
 
     <p>Уже есть аккаунт? <a href="login.php">Войти</a></p>
 
+    <p class="error"><b>Внимание</b>: На данный момент наблюдаются проблемы с доставкой писем подтверждения на почтовые сервисы, отличные от <i>@yandex.ru</i>. Рекомендуем использовать адрес электронной почты <i>@yandex.ru</i> для гарантированного получения письма.</p>
+
     <?php if (!$success && empty($errors) && $_SERVER["REQUEST_METHOD"] == "POST"): ?>
-        <p class="info">На ваш адрес электронной почты отправлено письмо с инструкциями по подтверждению.</p>
+        <p class="info">На ваш адрес электронной почты отправлено письмо с инструкциями по подтверждению. Пожалуйста, проверьте папку "Спам", если письмо не пришло в течение нескольких минут.</p>
     <?php endif; ?>
 </div>
 </body>

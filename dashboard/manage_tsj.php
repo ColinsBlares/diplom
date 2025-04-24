@@ -172,7 +172,7 @@ $total_requests = $total_requests->fetchColumn();
     </table>
 
     <div class="actions">
-        <a href="view_payments.php?tsj_id=<?= $tsj_id ?>" class="btn">Платежи</a>
+        <a href="view_payments.php?id_tszh=<?= $tsj_id ?>" class="btn">Платежи</a>
         <a href="view_requests.php?tsj_id=<?= $tsj_id ?>" class="btn">Заявки</a>
         <a href="dashboard.php?id_tszh=<?= $tsj_id ?>" class="btn">Назад</a>
     </div>

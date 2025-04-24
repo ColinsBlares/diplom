@@ -91,7 +91,7 @@ $total_requests = $stmt_requests->fetchColumn();
     <a href="view_requests.php?id_tszh=<?= $id_tszh ?>" class="btn">Заявки</a>
     <a href="manage_tsj.php?id_tszh=<?= $id_tszh ?>" class="btn">Управление</a>
     <a href="manage_apartments.php?id_tszh=<?= $id_tszh ?>" class="btn">Добавление квартиры</a>
-    <a href="profile.php" class="btn">Назад в профиль</a>
+    <a href="../profile.php" class="btn">Назад в профиль</a>
 </div>
 </body>
 </html>
