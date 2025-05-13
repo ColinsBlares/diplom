@@ -22,7 +22,7 @@ if (!$user) {
     exit;
 }
 
-// Определите желаемый путь к админ-панели
+// Путь к админ-панели
 $admin_panel_path = 'admin/admin_dashboard.php';
 
 // Приветствие по времени суток
@@ -32,9 +32,17 @@ elseif ($hour >= 12 && $hour < 18) $greeting = 'Добрый день';
 elseif ($hour >= 18 && $hour < 23) $greeting = 'Добрый вечер';
 else $greeting = 'Доброй ночи';
 
-// Безопасное извлечение данных из сессии
+// Извлечение данных из сессии
 $role = htmlspecialchars($_SESSION['role'] ?? 'Неизвестно');
 $tsj_id = htmlspecialchars($_SESSION['tsj_id'] ?? '');
+
+// Проверка активного приглашения
+$active_invitation = false;
+if ($role === 'user') {
+    $stmt_inv = $pdo->prepare("SELECT id FROM invitations WHERE user_id = :user_id LIMIT 1");
+    $stmt_inv->execute(['user_id' => $user_id]);
+    $active_invitation = $stmt_inv->fetch() !== false;
+}
 ?>
 
 <!DOCTYPE html>
@@ -56,20 +64,26 @@ $tsj_id = htmlspecialchars($_SESSION['tsj_id'] ?? '');
         <?php endif; ?>
     </div>
 
-        <div class="actions">
+    <?php if ($active_invitation): ?>
+        <div class="invitation-notice">
+            <p style="color: green;"><strong>У вас есть активное приглашение присоединиться к ТСЖ!</strong></p>
+            <p><a href="join_tsj.php" class="btn">Присоединиться</a></p>
+        </div>
+    <?php endif; ?>
+
+    <div class="actions">
         <?php if ($role === 'admin'): ?>
             <p><a href="<?= htmlspecialchars($admin_panel_path) ?>" class="btn">Админ-панель</a></p>
-        
+
         <?php elseif (($role === 'owner' || $role === 'manager') && $tsj_id): ?>
             <p><a href="dashboard/dashboard.php?id_tszh=<?= urlencode($tsj_id) ?>" class="btn">Панель управления ТСЖ</a></p>
-    
+
         <?php elseif ($role === 'user'): ?>
             <p><a href="create_tsj.php" class="btn">Создать ТСЖ</a></p>
         <?php endif; ?>
-    
-        <p><a href="logout.php" class="btn">Выйти</a></p>
-        </div>
 
+        <p><a href="logout.php" class="btn">Выйти</a></p>
+    </div>
 </div>
 </body>
 </html>

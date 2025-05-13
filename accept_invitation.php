@@ -54,7 +54,7 @@ try {
 
     // Установка сообщения об успехе
     $_SESSION['success'] = "Вы успешно приняли приглашение в ТСЖ '{$invitation['tsj_name']}'!";
-    header("Location: manage_tsj.php"); // Перенаправляем на панель управления ТСЖ
+    header("Location: dashboard/manage_tsj.php"); // Перенаправляем на панель управления ТСЖ
     exit;
 } catch (Exception $e) {
     // Откат транзакции при ошибке
