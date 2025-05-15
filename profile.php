@@ -38,12 +38,16 @@ $tsj_id = htmlspecialchars($_SESSION['tsj_id'] ?? '');
 
 // Проверка активного приглашения
 $active_invitation = false;
+$invitation = null;
+
 if ($role === 'user') {
-    $stmt_inv = $pdo->prepare("SELECT id FROM invitations WHERE user_id = :user_id LIMIT 1");
+    $stmt_inv = $pdo->prepare("SELECT id FROM invitations WHERE user_id = :user_id AND status = 'pending' LIMIT 1");
     $stmt_inv->execute(['user_id' => $user_id]);
-    $active_invitation = $stmt_inv->fetch() !== false;
+    $invitation = $stmt_inv->fetch();
+    $active_invitation = $invitation !== false;
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="ru">
@@ -67,7 +71,7 @@ if ($role === 'user') {
     <?php if ($active_invitation): ?>
         <div class="invitation-notice">
             <p style="color: green;"><strong>У вас есть активное приглашение присоединиться к ТСЖ!</strong></p>
-            <p><a href="join_tsj.php" class="btn">Присоединиться</a></p>
+            <a href="accept_invitation.php?id=<?= $invitation['id'] ?>" class="btn">Присоединиться</a>
         </div>
     <?php endif; ?>
 
@@ -79,7 +83,7 @@ if ($role === 'user') {
             <p><a href="dashboard/dashboard.php?id_tszh=<?= urlencode($tsj_id) ?>" class="btn">Панель управления ТСЖ</a></p>
 
         <?php elseif ($role === 'user'): ?>
-            <p><a href="create_tsj.php" class="btn">Создать ТСЖ</a></p>
+            <p><a href="accept_invitation?=id.php" class="btn">Создать ТСЖ</a></p>
         <?php endif; ?>
 
         <p><a href="logout.php" class="btn">Выйти</a></p>

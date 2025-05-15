@@ -346,7 +346,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div style="text-align: left; margin-bottom: 10px;">
             <label><input type="radio" name="gender" value="male" required> Мужской</label><br>
             <label><input type="radio" name="gender" value="female"> Женский</label><br>
-            <label><input type="radio" name="gender" value="other"> Другое</label>
         </div>
 
         <label>

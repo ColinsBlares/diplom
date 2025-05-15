@@ -121,94 +121,31 @@ $users = $stmt_users->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактирование ТСЖ | Админ панель</title>
-    <link rel="stylesheet" href="../styles.css">
-    <style>
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="url"],
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .error-message {
-            color: red;
-            margin-bottom: 10px;
-        }
-        .button-group {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin: 0 10px;
-        }
-        .save-button {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .cancel-button {
-            background-color: #f44336;
-            color: white;
-        }
-        .save-button:hover {
-            background-color: #45a049;
-        }
-        .cancel-button:hover {
-            background-color: #d32f2f;
-        }
-    </style>
+    <!-- Подключение Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Редактирование ТСЖ</h1>
+    <div class="container mt-5">
+        <h1 class="text-center">Редактирование ТСЖ</h1>
 
         <?php if (isset($error_message)): ?>
-            <div class="error-message"><?= $error_message ?></div>
+            <div class="alert alert-danger"><?= $error_message ?></div>
         <?php endif; ?>
 
         <form method="POST">
             <div class="form-group">
                 <label for="name">Название ТСЖ:</label>
-                <input type="text" id="name" name="name" value="<?= htmlspecialchars($tszh['name']) ?>" required>
+                <input type="text" id="name" name="name" class="form-control" value="<?= htmlspecialchars($tszh['name']) ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="address">Адрес:</label>
-                <input type="text" id="address" name="address" value="<?= htmlspecialchars($tszh['address']) ?>" required>
+                <input type="text" id="address" name="address" class="form-control" value="<?= htmlspecialchars($tszh['address']) ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="owner_id">Владелец ТСЖ:</label>
-                <select id="owner_id" name="owner_id" required>
+                <select id="owner_id" name="owner_id" class="form-control" required>
                     <option value="">-- Выберите владельца --</option>
                     <?php foreach ($users as $user): ?>
                         <option value="<?= $user['id'] ?>" <?= ($tszh['owner_id'] == $user['id']) ? 'selected' : '' ?>><?= htmlspecialchars($user['username']) ?></option>
@@ -218,59 +155,58 @@ $users = $stmt_users->fetchAll();
 
             <div class="form-group">
                 <label for="inn">ИНН:</label>
-                <input type="text" id="inn" name="inn" value="<?= htmlspecialchars($tszh['inn']) ?>">
+                <input type="text" id="inn" name="inn" class="form-control" value="<?= htmlspecialchars($tszh['inn']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="ogrn">ОГРН:</label>
-                <input type="text" id="ogrn" name="ogrn" value="<?= htmlspecialchars($tszh['ogrn']) ?>">
+                <input type="text" id="ogrn" name="ogrn" class="form-control" value="<?= htmlspecialchars($tszh['ogrn']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="phone">Телефон:</label>
-                <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($tszh['phone']) ?>">
+                <input type="text" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($tszh['phone']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="<?= htmlspecialchars($tszh['email']) ?>">
+                <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($tszh['email']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="website">Веб-сайт:</label>
-                <input type="url" id="website" name="website" value="<?= htmlspecialchars($tszh['website']) ?>">
+                <input type="url" id="website" name="website" class="form-control" value="<?= htmlspecialchars($tszh['website']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="bank_account">Расчетный счет:</label>
-                <input type="text" id="bank_account" name="bank_account" value="<?= htmlspecialchars($tszh['bank_account']) ?>">
+                <input type="text" id="bank_account" name="bank_account" class="form-control" value="<?= htmlspecialchars($tszh['bank_account']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="bank_name">Наименование банка:</label>
-                <input type="text" id="bank_name" name="bank_name" value="<?= htmlspecialchars($tszh['bank_name']) ?>">
+                <input type="text" id="bank_name" name="bank_name" class="form-control" value="<?= htmlspecialchars($tszh['bank_name']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="bik">БИК:</label>
-                <input type="text" id="bik" name="bik" value="<?= htmlspecialchars($tszh['bik']) ?>">
+                <input type="text" id="bik" name="bik" class="form-control" value="<?= htmlspecialchars($tszh['bik']) ?>">
             </div>
 
             <div class="form-group">
                 <label for="legal_address">Юридический адрес:</label>
-                <textarea id="legal_address" name="legal_address"><?= htmlspecialchars($tszh['legal_address']) ?></textarea>
+                <textarea id="legal_address" name="legal_address" class="form-control"><?= htmlspecialchars($tszh['legal_address']) ?></textarea>
             </div>
 
             <div class="form-group">
                 <label for="chairman_name">Имя председателя:</label>
-                <input type="text" id="chairman_name" name="chairman_name" value="<?= htmlspecialchars($tszh['chairman_name']) ?>">
+                <input type="text" id="chairman_name" name="chairman_name" class="form-control" value="<?= htmlspecialchars($tszh['chairman_name']) ?>">
             </div>
 
-            <div class="button-group">
-                <button type="submit" class="button save-button">Сохранить</button>
-                <a href="index.php" class="button cancel-button">Отмена</a>
+            <div class="text-center">
+                <button type="submit" class="btn btn-success">Сохранить</button>
+                <a href="list" class="btn btn-danger">Отмена</a>
             </div>
         </form>
     </div>
-</body>
-</html>
+<?php include '../footer.php';?>

@@ -7,8 +7,37 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 require_once '../../db.php';
 $pdo = require '../../db.php';
 
-$stmt = $pdo->query("SELECT id, username, email, role, is_verified FROM users");
+// Обработка фильтров и поиска
+$whereClauses = [];
+$params = [];
+
+if (!empty($_GET['search'])) {
+    $search = '%' . $_GET['search'] . '%';
+    $whereClauses[] = "(username LIKE ? OR email LIKE ?)";
+    $params[] = $search;
+    $params[] = $search;
+}
+
+if (!empty($_GET['role'])) {
+    $role = $_GET['role'];
+    $whereClauses[] = "role = ?";
+    $params[] = $role;
+}
+
+if (!empty($_GET['is_verified'])) {
+    $is_verified = $_GET['is_verified'];
+    $whereClauses[] = "is_verified = ?";
+    $params[] = $is_verified;
+}
+
+$whereSql = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+$stmt = $pdo->prepare("SELECT id, username, email, role, is_verified FROM users $whereSql");
+$stmt->execute($params);
 $users = $stmt->fetchAll();
+
+// Получаем роли для фильтра
+$rolesStmt = $pdo->query("SELECT DISTINCT role FROM users");
+$roles = $rolesStmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -16,124 +45,44 @@ $users = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление пользователями | ТСЖ</title>
-    <style>
-        /* Общие стили */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 1200px;
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        tbody tr:hover {
-            background-color: #e9e9e9;
-        }
-
-        td a {
-            display: inline-block;
-            padding: 8px 12px;
-            margin-right: 5px;
-            text-decoration: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: background-color 0.3s ease;
-        }
-
-        td a:hover {
-            background-color: #0056b3;
-        }
-
-        .no-users {
-            text-align: center;
-            color: #777;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .pagination a, .pagination span {
-            display: inline-block;
-            padding: 8px 12px;
-            margin: 0 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #333;
-            background-color: #fff;
-        }
-
-        .pagination a:hover {
-            background-color: #f0f0f0;
-        }
-
-        .pagination .current {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <!-- Подключение Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h2>Управление пользователями</h2>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Управление пользователями</h2>
+
+        <!-- Форма поиска и фильтров -->
+        <form method="get" class="mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" placeholder="Поиск по имени или email" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-control">
+                        <option value="">Все роли</option>
+                        <?php foreach ($roles as $roleOption): ?>
+                            <option value="<?= $roleOption['role'] ?>" <?= isset($_GET['role']) && $_GET['role'] === $roleOption['role'] ? 'selected' : '' ?>><?= htmlspecialchars($roleOption['role']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="is_verified" class="form-control">
+                        <option value="">Статус подтверждения</option>
+                        <option value="1" <?= isset($_GET['is_verified']) && $_GET['is_verified'] == '1' ? 'selected' : '' ?>>Подтвержден</option>
+                        <option value="0" <?= isset($_GET['is_verified']) && $_GET['is_verified'] == '0' ? 'selected' : '' ?>>Не подтвержден</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Применить фильтры</button>
+                </div>
+            </div>
+        </form>
+
         <?php if (!empty($users)): ?>
-            <table>
-                <thead>
+            <table class="table table-bordered table-striped">
+                <thead class="thead-light">
                     <tr>
                         <th>ID</th>
                         <th>Имя пользователя</th>
@@ -152,18 +101,20 @@ $users = $stmt->fetchAll();
                             <td><?= htmlspecialchars($user['role']) ?></td>
                             <td><?= $user['is_verified'] ? 'Да' : 'Нет' ?></td>
                             <td>
-                                <a href="edit.php?id=<?= $user['id'] ?>">Редактировать</a>
-                                <a href="block.php?id=<?= $user['id'] ?>">Блокировать</a>
-                                <a href="reset_password.php?id=<?= $user['id'] ?>">Сбросить пароль</a>
+                                <a href="edit.php?id=<?= $user['id'] ?>" class="btn btn-warning btn-sm">Редактировать</a>
+                                <a href="reset_password.php?id=<?= $user['id'] ?>" class="btn btn-info btn-sm">Сбросить пароль</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         <?php else: ?>
-            <p class="no-users">Нет зарегистрированных пользователей.</p>
+            <p class="text-center text-muted">Нет зарегистрированных пользователей по выбранным фильтрам.</p>
         <?php endif; ?>
-        <p class="back-link"><a href="../admin_dashboard.php">Назад в админ-панель</a></p>
+        <p class="text-center mt-4">
+            <a href="../admin_dashboard.php" class="btn btn-secondary">Назад в админ-панель</a>
+        </p>
     </div>
-</body>
-</html>
+<?php
+include '../footer.php';
+?>

@@ -41,11 +41,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             unset($_SESSION[AUTH_CODE_USER_ID_SESSION_KEY]);
 
             if ($_SESSION['role'] === ROLE_ADMIN) {
-                header("Location: admin_dashboard.php");
+                header("Location: admin_dashboard");
             } elseif ($_SESSION['role'] === ROLE_OWNER || $_SESSION['role'] === ROLE_MANAGER) {
-                header("Location: dashboard/dashboard.php?id_tszh=" . $user['tsj_id']);
+                header("Location: dashboard/dashboard?id_tszh=" . $user['tsj_id']);
             } else {
-                header("Location: profile.php");
+                header("Location: profile");
             }
             exit;
         } else {

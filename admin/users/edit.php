@@ -88,119 +88,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактирование пользователя | ТСЖ</title>
-    <style>
-        /* Общие стили */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 600px;
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .success {
-            color: green;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .error {
-            background-color: #ffe0e0;
-            color: #d32f2f;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .error ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .error li {
-            margin-bottom: 5px;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="date"],
-        select {
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        input[type="checkbox"] {
-            margin-top: 10px;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            padding: 12px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        a {
-            display: block;
-            margin-top: 20px;
-            color: #007bff;
-            text-decoration: none;
-            text-align: center;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h2>Редактирование пользователя</h2>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Редактирование пользователя</h2>
+        
         <?php if ($success): ?>
-            <p class="success"><?= htmlspecialchars($success) ?></p>
+            <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
         <?php endif; ?>
         <?php if (!empty($errors)): ?>
-            <div class="error">
+            <div class="alert alert-danger">
                 <ul>
                     <?php foreach ($errors as $error): ?>
                         <li><?= htmlspecialchars($error) ?></li>
@@ -208,43 +106,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </ul>
             </div>
         <?php endif; ?>
+
         <form method="POST">
-            <label for="username">Имя пользователя:</label>
-            <input type="text" id="username" name="username" value="<?= htmlspecialchars($user['username']) ?>" required>
+            <div class="form-group">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" name="username" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" required>
+            </div>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" required>
+            </div>
 
-            <label for="role">Роль:</label>
-            <select id="role" name="role" required>
-                <option value="user" <?= $user['role'] === 'user' ? 'selected' : '' ?>>Пользователь</option>
-                <option value="owner" <?= $user['role'] === 'owner' ? 'selected' : '' ?>>Владелец ТСЖ</option>
-                <option value="manager" <?= $user['role'] === 'manager' ? 'selected' : '' ?>>Менеджер</option>
-                <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Администратор</option>
-            </select>
+            <div class="form-group">
+                <label for="role">Роль:</label>
+                <select id="role" name="role" class="form-control" required>
+                    <option value="user" <?= $user['role'] === 'user' ? 'selected' : '' ?>>Пользователь</option>
+                    <option value="owner" <?= $user['role'] === 'owner' ? 'selected' : '' ?>>Владелец ТСЖ</option>
+                    <option value="manager" <?= $user['role'] === 'manager' ? 'selected' : '' ?>>Менеджер</option>
+                    <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Администратор</option>
+                </select>
+            </div>
 
-            <label for="is_verified">Подтвержденный Email:</label>
-            <input type="checkbox" id="is_verified" name="is_verified" <?= $user['is_verified'] ? 'checked' : '' ?>>
+            <div class="form-group">
+                <label for="is_verified">Подтвержденный Email:</label>
+                <input type="checkbox" id="is_verified" name="is_verified" <?= $user['is_verified'] ? 'checked' : '' ?> class="form-check-input">
+            </div>
 
-            <label for="full_name">Полное имя:</label>
-            <input type="text" id="full_name" name="full_name" value="<?= htmlspecialchars($user['full_name']) ?>" required>
+            <div class="form-group">
+                <label for="full_name">Полное имя:</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" value="<?= htmlspecialchars($user['full_name']) ?>" required>
+            </div>
 
-            <label for="phone">Телефон:</label>
-            <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($user['phone']) ?>" required>
+            <div class="form-group">
+                <label for="phone">Телефон:</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($user['phone']) ?>" required>
+            </div>
 
-            <label for="date_of_birth">Дата рождения:</label>
-            <input type="date" id="date_of_birth" name="date_of_birth" value="<?= htmlspecialchars($user['date_of_birth']) ?>" required>
+            <div class="form-group">
+                <label for="date_of_birth">Дата рождения:</label>
+                <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" value="<?= htmlspecialchars($user['date_of_birth']) ?>" required>
+            </div>
 
-            <label for="gender">Пол:</label>
-            <select id="gender" name="gender" required>
-                <option value="male" <?= $user['gender'] === 'male' ? 'selected' : '' ?>>Мужской</option>
-                <option value="female" <?= $user['gender'] === 'female' ? 'selected' : '' ?>>Женский</option>
-                <option value="other" <?= $user['gender'] === 'other' ? 'selected' : '' ?>>Другой</option>
-            </select>
+            <div class="form-group">
+                <label for="gender">Пол:</label>
+                <select id="gender" name="gender" class="form-control" required>
+                    <option value="male" <?= $user['gender'] === 'male' ? 'selected' : '' ?>>Мужской</option>
+                    <option value="female" <?= $user['gender'] === 'female' ? 'selected' : '' ?>>Женский</option>
+                </select>
+            </div>
 
-            <button type="submit" class="btn">Сохранить</button>
+            <button type="submit" class="btn btn-primary w-100">Сохранить</button>
         </form>
-        <p><a href="list.php">Назад к списку пользователей</a></p>
+
+        <p class="text-center mt-4">
+            <a href="list.php" class="btn btn-secondary">Назад к списку пользователей</a>
+        </p>
     </div>
-</body>
-</html>
+<?php
+include '../footer.php';
+?>

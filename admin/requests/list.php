@@ -55,47 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id']) && isse
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Список заявок | Админ панель</title>
-    <link rel="stylesheet" href="../../styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .container {
-            max-width: 960px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background-color: #f5f5f5;
-        }
-        .status-select {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        .pagination {
-            margin-top: 20px;
-            text-align: center;
-        }
         .pagination a, .pagination span {
             display: inline-block;
             padding: 8px 12px;
@@ -121,16 +82,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id']) && isse
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Список заявок пользователей</h1>
+    <div class="container my-5">
+        <h1 class="text-center">Список заявок пользователей</h1>
 
         <?php if (isset($error_message)): ?>
             <p class="error-message"><?= htmlspecialchars($error_message) ?></p>
         <?php endif; ?>
 
         <?php if (!empty($requests)): ?>
-            <table>
-                <thead>
+            <table class="table table-bordered table-striped mt-4">
+                <thead class="thead-dark">
                     <tr>
                         <th>ID</th>
                         <th>Пользователь</th>
@@ -150,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id']) && isse
                             <td>
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="request_id" value="<?= htmlspecialchars($request['id']) ?>">
-                                    <select name="status" class="status-select" onchange="this.form.submit()">
+                                    <select name="status" class="form-select" onchange="this.form.submit()">
                                         <option value="pending" <?= $request['status'] === 'pending' ? 'selected' : '' ?>>Ожидает</option>
                                         <option value="in_progress" <?= $request['status'] === 'in_progress' ? 'selected' : '' ?>>В обработке</option>
                                         <option value="completed" <?= $request['status'] === 'completed' ? 'selected' : '' ?>>Выполнена</option>
@@ -159,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id']) && isse
                                 </form>
                             </td>
                             <td>
-                                <a href="view.php?id=<?= htmlspecialchars($request['id']) ?>">Просмотреть</a>
+                                <a href="view.php?id=<?= htmlspecialchars($request['id']) ?>" class="btn btn-primary btn-sm">Просмотреть</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -169,28 +130,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id']) && isse
             <?php if ($total_pages > 1): ?>
                 <div class="pagination">
                     <?php if ($page > 1): ?>
-                        <a href="?page=<?= $page - 1 ?>">«</a>
+                        <a href="?page=<?= $page - 1 ?>" class="btn btn-outline-secondary">«</a>
                     <?php endif; ?>
 
                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                         <?php if ($i === $page): ?>
-                            <span class="current"><?= $i ?></span>
+                            <span class="current btn btn-primary"><?= $i ?></span>
                         <?php else: ?>
-                            <a href="?page=<?= $i ?>"><?= $i ?></a>
+                            <a href="?page=<?= $i ?>" class="btn btn-outline-secondary"><?= $i ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
 
                     <?php if ($page < $total_pages): ?>
-                        <a href="?page=<?= $page + 1 ?>">»</a>
+                        <a href="?page=<?= $page + 1 ?>" class="btn btn-outline-secondary">»</a>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
 
         <?php else: ?>
-            <p>На данный момент нет ни одной заявки.</p>
+            <p class="text-center">На данный момент нет ни одной заявки.</p>
         <?php endif; ?>
 
-        <p><a href="../admin_dashboard.php">Назад в админ панель</a></p>
+        <p><a href="../admin_dashboard.php" class="btn btn-secondary">Назад в админ панель</a></p>
     </div>
-</body>
-</html>
+
+<?php include '../footer.php';?>

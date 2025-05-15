@@ -34,111 +34,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавить ТСЖ | ТСЖ</title>
-    <style>
-        /* Ваши стили CSS здесь (можно вынести в отдельный файл) */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 600px;
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .success {
-            color: green;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .error {
-            background-color: #ffe0e0;
-            color: #d32f2f;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .error ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .error li {
-            margin-bottom: 5px;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        .btn {
-            padding: 12px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <!-- Подключаем Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h2>Добавить новое ТСЖ</h2>
+    <div class="container mt-5">
+        <h2 class="text-center">Добавить новое ТСЖ</h2>
+        
         <?php if ($success): ?>
-            <p class="success"><?= htmlspecialchars($success) ?></p>
+            <div class="alert alert-success text-center"><?= htmlspecialchars($success) ?></div>
         <?php endif; ?>
+        
         <?php if (!empty($errors)): ?>
-            <div class="error">
+            <div class="alert alert-danger">
                 <ul>
                     <?php foreach ($errors as $error): ?>
                         <li><?= htmlspecialchars($error) ?></li>
@@ -146,16 +54,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </ul>
             </div>
         <?php endif; ?>
+        
         <form method="POST">
-            <label for="name">Название ТСЖ:</label>
-            <input type="text" id="name" name="name" required>
+            <div class="mb-3">
+                <label for="name" class="form-label">Название ТСЖ:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
 
-            <label for="address">Адрес ТСЖ:</label>
-            <input type="text" id="address" name="address" required>
+            <div class="mb-3">
+                <label for="address" class="form-label">Адрес ТСЖ:</label>
+                <input type="text" class="form-control" id="address" name="address" required>
+            </div>
 
-            <button type="submit" class="btn">Добавить</button>
+            <button type="submit" class="btn btn-primary">Добавить</button>
         </form>
-        <p class="back-link"><a href="list.php">Назад к списку ТСЖ</a></p>
+
+        <p class="mt-3 text-center"><a href="list.php" class="btn btn-secondary">Назад к списку ТСЖ</a></p>
     </div>
-</body>
-</html>
+    
+<?php include '../footer.php';?>

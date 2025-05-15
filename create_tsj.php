@@ -109,119 +109,109 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <title>Создать ТСЖ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* стили — без изменений */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 40%;
-            width: 100%;
-        }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"],
-        input[type="email"],
-        input[type="url"],
-        textarea,
-        select {
-            width: 100%; padding: 10px; border: 1px solid #ccc;
-            border-radius: 4px; box-sizing: border-box;
-        }
-        textarea { min-height: 80px; }
-        .btn {
-            background: #4CAF50; color: white; padding: 10px;
-            border: none; border-radius: 5px; cursor: pointer;
-            width: 100%; font-size: 16px;
-        }
-        .btn:hover { background: #45a049; }
-        .error { color: red; margin-bottom: 10px; }
-        .success { color: green; margin-bottom: 10px; }
-        .back-link { margin-top: 15px; text-align: center; }
-        .back-link a {
-            color: #4CAF50; text-decoration: none;
-        }
-        .back-link a:hover { text-decoration: underline; }
-
-        @media (max-width: 600px) {
-            .container { padding: 15px; border-radius: 5px; }
-            .form-group { margin-bottom: 10px; }
-            .btn { padding: 8px; font-size: 14px; }
-        }
-    </style>
+    <!-- Подключаем Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container">
-    <h2>Создать ТСЖ</h2>
+    <div class="container mt-5">
+        <h2 class="text-center">Создать ТСЖ</h2>
 
-    <?php if ($success): ?>
-        <p class="success"><?= $success ?></p>
-    <?php endif; ?>
+        <?php if ($success): ?>
+            <div class="alert alert-success text-center"><?= $success ?></div>
+        <?php endif; ?>
 
-    <?php if (!empty($errors)): ?>
-        <div class="error">
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?= $error ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-
-    <form method="POST">
-        <div class="form-group">
-            <label for="name">Название ТСЖ:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-
-        <div class="form-group">
-            <label for="address">Адрес ТСЖ:</label>
-            <textarea id="address" name="address" required></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="owner_id">Выберите владельца ТСЖ:</label>
-            <?php if ($role !== 'admin'): ?>
-                <input type="hidden" name="owner_id" value="<?= $user_id ?>">
-                <input type="text" value="<?= htmlspecialchars($_SESSION['username']) ?>" disabled>
-            <?php else: ?>
-                <select id="owner_id" name="owner_id" required>
-                    <option value="">-- Выберите пользователя --</option>
-                    <?php foreach ($users as $user): ?>
-                        <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
+        <?php if (!empty($errors)): ?>
+            <div class="alert alert-danger">
+                <ul>
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= $error ?></li>
                     <?php endforeach; ?>
-                </select>
-            <?php endif; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label">Название ТСЖ:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="address" class="form-label">Адрес ТСЖ:</label>
+                <textarea class="form-control" id="address" name="address" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="owner_id" class="form-label">Выберите владельца ТСЖ:</label>
+                <?php if ($role !== 'admin'): ?>
+                    <input type="hidden" name="owner_id" value="<?= $user_id ?>">
+                    <input type="text" class="form-control" value="<?= htmlspecialchars($_SESSION['username']) ?>" disabled>
+                <?php else: ?>
+                    <select class="form-select" id="owner_id" name="owner_id" required>
+                        <option value="">-- Выберите пользователя --</option>
+                        <?php foreach ($users as $user): ?>
+                            <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
+            </div>
+
+            <div class="mb-3">
+                <label for="inn" class="form-label">ИНН:</label>
+                <input type="text" class="form-control" id="inn" name="inn">
+            </div>
+
+            <div class="mb-3">
+                <label for="ogrn" class="form-label">ОГРН:</label>
+                <input type="text" class="form-control" id="ogrn" name="ogrn">
+            </div>
+
+            <div class="mb-3">
+                <label for="phone" class="form-label">Телефон:</label>
+                <input type="text" class="form-control" id="phone" name="phone">
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="email" name="email">
+            </div>
+
+            <div class="mb-3">
+                <label for="website" class="form-label">Веб-сайт:</label>
+                <input type="url" class="form-control" id="website" name="website">
+            </div>
+
+            <div class="mb-3">
+                <label for="bank_account" class="form-label">Расчетный счет:</label>
+                <input type="text" class="form-control" id="bank_account" name="bank_account">
+            </div>
+
+            <div class="mb-3">
+                <label for="bank_name" class="form-label">Наименование банка:</label>
+                <input type="text" class="form-control" id="bank_name" name="bank_name">
+            </div>
+
+            <div class="mb-3">
+                <label for="bik" class="form-label">БИК:</label>
+                <input type="text" class="form-control" id="bik" name="bik">
+            </div>
+
+            <div class="mb-3">
+                <label for="legal_address" class="form-label">Юридический адрес:</label>
+                <textarea class="form-control" id="legal_address" name="legal_address"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="chairman_name" class="form-label">Имя председателя:</label>
+                <input type="text" class="form-control" id="chairman_name" name="chairman_name">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Создать ТСЖ</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="profile" class="btn btn-secondary">Назад в профиль</a>
         </div>
-
-        <div class="form-group"><label for="inn">ИНН:</label><input type="text" id="inn" name="inn"></div>
-        <div class="form-group"><label for="ogrn">ОГРН:</label><input type="text" id="ogrn" name="ogrn"></div>
-        <div class="form-group"><label for="phone">Телефон:</label><input type="text" id="phone" name="phone"></div>
-        <div class="form-group"><label for="email">Email:</label><input type="email" id="email" name="email"></div>
-        <div class="form-group"><label for="website">Веб-сайт:</label><input type="url" id="website" name="website"></div>
-        <div class="form-group"><label for="bank_account">Расчетный счет:</label><input type="text" id="bank_account" name="bank_account"></div>
-        <div class="form-group"><label for="bank_name">Наименование банка:</label><input type="text" id="bank_name" name="bank_name"></div>
-        <div class="form-group"><label for="bik">БИК:</label><input type="text" id="bik" name="bik"></div>
-        <div class="form-group"><label for="legal_address">Юридический адрес:</label><textarea id="legal_address" name="legal_address"></textarea></div>
-        <div class="form-group"><label for="chairman_name">Имя председателя:</label><input type="text" id="chairman_name" name="chairman_name"></div>
-
-        <button type="submit" class="btn">Создать ТСЖ</button>
-    </form>
-
-    <div class="back-link">
-        <a href="profile.php">Назад в профиль</a>
     </div>
-</div>
-</body>
-</html>
+
+<?php include '../footer.php';?>

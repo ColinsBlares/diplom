@@ -124,151 +124,92 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактировать жильца | ТСЖ</title>
-    <style>
-        /* Общие стили */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            max-width: 600px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        form {
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-size: 14px;
-        }
-
-        input {
-            width: calc(100% - 22px); /* Учет padding и border */
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #007bff; /* Синий цвет для редактирования */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        .error {
-            color: red;
-            margin-bottom: 10px;
-        }
-
-        .success {
-            color: green;
-            margin-bottom: 10px;
-        }
-
-        .back-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #6c757d; /* Серый цвет для кнопки "Назад" */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .back-btn:hover {
-            background-color: #5a6268;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-<div class="container">
-    <h2>Редактировать жильца</h2>
+<body class="bg-light">
 
-    <?php if ($success): ?>
-        <p class="success"><?= htmlspecialchars($success) ?></p>
-    <?php endif; ?>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Редактировать жильца</h2>
 
-    <?php if (!empty($errors)): ?>
-        <div class="error">
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?= htmlspecialchars($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
+                    <?php if ($success): ?>
+                        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($errors)): ?>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <?php foreach ($errors as $error): ?>
+                                    <li><?= htmlspecialchars($error) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($resident): ?>
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">ФИО жильца</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" value="<?= htmlspecialchars($resident['full_name']) ?>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="apartment_number" class="form-label">Номер квартиры</label>
+                                <input type="text" class="form-control" id="apartment_number" name="apartment_number" value="<?= htmlspecialchars($resident['apartment_number']) ?>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Телефон</label>
+                                <input type="text" class="form-control" id="phone" name="phone" value="<?= htmlspecialchars($resident['phone']) ?>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="passport_series" class="form-label">Серия паспорта (опционально)</label>
+                                <input type="text" class="form-control" id="passport_series" name="passport_series" value="<?= htmlspecialchars($resident['passport_series'] ?? '') ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="passport_number" class="form-label">Номер паспорта (опционально)</label>
+                                <input type="text" class="form-control" id="passport_number" name="passport_number" value="<?= htmlspecialchars($resident['passport_number'] ?? '') ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="passport_issued_by" class="form-label">Кем выдан паспорт (опционально)</label>
+                                <input type="text" class="form-control" id="passport_issued_by" name="passport_issued_by" value="<?= htmlspecialchars($resident['passport_issued_by'] ?? '') ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="passport_issue_date" class="form-label">Дата выдачи паспорта (ГГГГ-ММ-ДД, опционально)</label>
+                                <input type="date" class="form-control" id="passport_issue_date" name="passport_issue_date" value="<?= htmlspecialchars($resident['passport_issue_date'] ?? '') ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="registration_address" class="form-label">Адрес регистрации (опционально)</label>
+                                <input type="text" class="form-control" id="registration_address" name="registration_address" value="<?= htmlspecialchars($resident['registration_address'] ?? '') ?>">
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                            </div>
+                        </form>
+
+                        <div class="mt-3 text-center">
+                            <a href="manage_tsj.php" class="btn btn-secondary">Назад к управлению</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-danger">Жилец не найден.</div>
+                        <div class="text-center">
+                            <a href="manage_tsj.php" class="btn btn-secondary">Назад к управлению</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
-    <?php endif; ?>
-
-    <?php if ($resident): ?>
-        <form method="POST" action="">
-            <label for="full_name">ФИО жильца:</label>
-            <input type="text" id="full_name" name="full_name" value="<?= htmlspecialchars($resident['full_name']) ?>" required>
-
-            <label for="apartment_number">Номер квартиры:</label>
-            <input type="text" id="apartment_number" name="apartment_number" value="<?= htmlspecialchars($resident['apartment_number']) ?>" required>
-
-            <label for="phone">Телефон:</label>
-            <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($resident['phone']) ?>" required>
-
-            <label for="passport_series">Серия паспорта (опционально):</label>
-            <input type="text" id="passport_series" name="passport_series" value="<?= htmlspecialchars($resident['passport_series'] ?? '') ?>">
-
-            <label for="passport_number">Номер паспорта (опционально):</label>
-            <input type="text" id="passport_number" name="passport_number" value="<?= htmlspecialchars($resident['passport_number'] ?? '') ?>">
-
-            <label for="passport_issued_by">Кем выдан паспорт (опционально):</label>
-            <input type="text" id="passport_issued_by" name="passport_issued_by" value="<?= htmlspecialchars($resident['passport_issued_by'] ?? '') ?>">
-
-            <label for="passport_issue_date">Дата выдачи паспорта (ГГГГ-ММ-ДД, опционально):</label>
-            <input type="text" id="passport_issue_date" name="passport_issue_date" placeholder="ГГГГ-ММ-ДД" value="<?= htmlspecialchars($resident['passport_issue_date'] ?? '') ?>">
-
-            <label for="registration_address">Адрес регистрации (опционально):</label>
-            <input type="text" id="registration_address" name="registration_address" value="<?= htmlspecialchars($resident['registration_address'] ?? '') ?>">
-
-            <button type="submit" class="btn">Сохранить изменения</button>
-        </form>
-
-        <p><a href="manage_tsj.php" class="back-btn">Назад к управлению</a></p>
-    <?php else: ?>
-        <p class="error">Жилец не найден.</p>
-        <p><a href="manage_tsj.php" class="back-btn">Назад к управлению</a></p>
-    <?php endif; ?>
+    </div>
 </div>
+
 </body>
 </html>
