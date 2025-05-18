@@ -83,7 +83,7 @@ if ($role === 'user') {
             <p><a href="dashboard/dashboard.php?id_tszh=<?= urlencode($tsj_id) ?>" class="btn">Панель управления ТСЖ</a></p>
 
         <?php elseif ($role === 'user'): ?>
-            <p><a href="accept_invitation?=id.php" class="btn">Создать ТСЖ</a></p>
+            <p><a href="create_tsj" class="btn">Создать ТСЖ</a></p>
         <?php endif; ?>
 
         <p><a href="logout.php" class="btn">Выйти</a></p>

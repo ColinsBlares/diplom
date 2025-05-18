@@ -61,6 +61,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
         // Отправка письма
         $mail = new PHPMailer(true);
+        $mail->CharSet = 'UTF-8';
         try {
             $mail->isSMTP();
             $mail->Host = $mail_host;
@@ -159,7 +160,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         </div>
     <?php endif; ?>
 
-    <a href="admin/users/list.php" class="btn">Назад к списку пользователей</a>
+    <a href="list" class="btn">Назад к списку пользователей</a>
 </div>
 
 </body>

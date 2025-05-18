@@ -95,7 +95,7 @@ function translateStatus($status) {
 
 // Генерация PDF (требует установки библиотеки TCPDF)
 if (isset($_GET['export_pdf'])) {
-    require_once('../lib/TCPDF/tcpdf.php'); // Путь к библиотеке TCPDF
+    require_once('../../lib/TCPDF/tcpdf.php'); // Путь к библиотеке TCPDF
 
     $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
     $pdf->SetCreator(PDF_CREATOR);
