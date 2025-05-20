@@ -13,8 +13,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Проверка прав доступа (только администраторы или владельцы могут просматривать заявки)
-if (!in_array($_SESSION['role'], ['admin', 'owner'])) {
+if (!in_array($_SESSION['role'], ['admin', 'owner', 'manager'])) {
     die("У вас нет прав для просмотра заявок.");
 }
 
